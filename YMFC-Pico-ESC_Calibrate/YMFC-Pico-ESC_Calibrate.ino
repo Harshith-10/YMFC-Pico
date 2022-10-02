@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////!!WARNING!!/////////////////////////////////////////
+/////////////////////////////////// !!WARNING!! ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 //Always remove the propellers and stay away from the motors unless you             ////
 //are 100% certain of what you are doing.                                           ////
@@ -18,20 +18,24 @@
 //5 = check vibrations for all motors together.                                     ////
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Wire.h>                                   //Include the Wire1.h library so we can communicate with the gyro.
-#include <EEPROM.h>                                  //Include the EEPROM.h library so we can store information onto the EEPROM
+#include <Wire.h>                                   //Include the Wire.h library so we can communicate with the gyro.
+#include <EEPROM.h>                                 //Include the EEPROM.h library so we can store information onto the EEPROM
 
 //Declaring global variables
 byte last_channel_1, last_channel_2, last_channel_3, last_channel_4;
 byte eeprom_data[36], start, data;
+
 boolean new_function_request,first_angle;
+
 volatile int receiver_input_channel_1, receiver_input_channel_2, receiver_input_channel_3, receiver_input_channel_4;
 int esc_1, esc_2, esc_3, esc_4;
 int counter_channel_1, counter_channel_2, counter_channel_3, counter_channel_4;
 int receiver_input[5];
 int loop_counter, gyro_address, vibration_counter;
 int temperature;
+
 long acc_x, acc_y, acc_z, acc_total_vector[20], acc_av_vector, vibration_total_result;
+
 unsigned long timer_channel_1, timer_channel_2, timer_channel_3, timer_channel_4, esc_timer, esc_loop_timer;
 unsigned long zero_timer, timer_1, timer_2, timer_3, timer_4, current_time;
 
@@ -58,10 +62,12 @@ void setup(){
   pinMode(12, OUTPUT);
 
   Serial.begin(57600);    // Start the serial port
+  
   Wire1.setSDA(14);       // Use GP14 as SDA
   Wire1.setSCL(15);       // Use GP15 as SCL
   Wire1.begin();          // Start the wire library as master
   Wire1.setClock(400000); // Set the I2C clock speed to 400kHz
+  
   EEPROM.begin(512);      // Start the EEPROM library with 512 bytes
 
   gpio_set_irq_enabled_with_callback(6, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &gpio_callback); // Set GP6 to trigger an interrupt on state change
