@@ -242,7 +242,7 @@ void loop(){
       //Let's take multiple gyro data samples so we can determine the average gyro offset (calibration).
       for (cal_int = 0; cal_int < 2000 ; cal_int ++){                                   //Take 2000 readings for calibration.
         if(cal_int % 125 == 0){
-          digitalWrite(12, !digitalRead(12));   //Change the led status to indicate calibration.
+          digitalWrite(10, !digitalRead(10));   //Change the led status to indicate calibration.
           Serial.print(".");
         }
         gyro_signalen();                                                                //Read the gyro output.
@@ -459,10 +459,10 @@ void esc_pulse_output(){
 
   while(gpio_get(2) || gpio_get(3) || gpio_get(4) || gpio_get(5)){   //Execute the loop until digital port 2 to 5 is low.
     esc_loop_timer = micros();                                       //Check the current time.
-    if(timer_channel_1 <= esc_loop_timer)gpio_put(2, true);          //When the delay time is expired, digital port 2 is set low.
-    if(timer_channel_2 <= esc_loop_timer)gpio_put(3, true);          //When the delay time is expired, digital port 3 is set low.
-    if(timer_channel_3 <= esc_loop_timer)gpio_put(4, true);          //When the delay time is expired, digital port 4 is set low.
-    if(timer_channel_4 <= esc_loop_timer)gpio_put(5, true);          //When the delay time is expired, digital port 5 is set low.
+    if(timer_channel_1 <= esc_loop_timer)gpio_put(2, false);          //When the delay time is expired, digital port 2 is set low.
+    if(timer_channel_2 <= esc_loop_timer)gpio_put(3, false);          //When the delay time is expired, digital port 3 is set low.
+    if(timer_channel_3 <= esc_loop_timer)gpio_put(4, false);          //When the delay time is expired, digital port 4 is set low.
+    if(timer_channel_4 <= esc_loop_timer)gpio_put(5, false);          //When the delay time is expired, digital port 5 is set low.
   }
 }
 
@@ -491,7 +491,7 @@ void set_gyro_registers(){
     Wire1.requestFrom(gyro_address, 1);                           //Request 1 bytes from the gyro
     while(Wire1.available() < 1);                                 //Wait until the 6 bytes are received
     if(Wire1.read() != 0x08){                                     //Check if the value is 0x08
-      digitalWrite(12,HIGH);                                     //Turn on the warning led
+      digitalWrite(10, HIGH);                                     //Turn on the warning led
       while(1)delay(10);                                         //Stay in this loop for ever
     }
 
