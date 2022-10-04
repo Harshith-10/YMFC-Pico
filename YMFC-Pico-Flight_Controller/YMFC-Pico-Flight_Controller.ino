@@ -166,7 +166,7 @@ void setup(){
     gpio_put(5, false);
     delayMicroseconds(3000);
     if(start == 125){                                                       //Every 125 loops (500ms).
-      digitalWrite(12, !digitalRead(12));                                   //Change the led status.
+      digitalWrite(10, !digitalRead(10));                                   //Change the led status.
       start = 0;                                                            //Start again at 0.
     }
   }
@@ -183,7 +183,7 @@ void setup(){
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
   //When everything is done, turn off the led.
-  digitalWrite(10,LOW);                                                     //Turn off the warning led.
+  digitalWrite(10, LOW);                                                     //Turn off the warning led.
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Main program loop
@@ -352,7 +352,11 @@ void loop(){
   while(micros() - loop_timer < 4000);                                      //We wait until 4000us are passed.
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
-  PORTD |= B11110000;                                                       //Set digital outputs 4,5,6 and 7 high.
+  //Set digital ports 2-5 HIGH.
+  gpio_put(2, true);
+  gpio_put(3, true);
+  gpio_put(4, true);
+  gpio_put(5, true);
   timer_channel_1 = esc_1 + loop_timer;                                     //Calculate the time of the faling edge of the esc-1 pulse.
   timer_channel_2 = esc_2 + loop_timer;                                     //Calculate the time of the faling edge of the esc-2 pulse.
   timer_channel_3 = esc_3 + loop_timer;                                     //Calculate the time of the faling edge of the esc-3 pulse.
@@ -362,66 +366,66 @@ void loop(){
   //Get the current gyro and receiver data and scale it to degrees per second for the pid calculations.
   gyro_signalen();
 
-  while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
+  while(gpio_get(2) || gpio_get(3) || gpio_get(4) || gpio_get(5)){          //Stay in this loop until output 2, 3, 4 and 5 are low.
     esc_loop_timer = micros();                                              //Read the current time.
-    if(timer_channel_1 <= esc_loop_timer)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired.
-    if(timer_channel_2 <= esc_loop_timer)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired.
-    if(timer_channel_3 <= esc_loop_timer)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired.
-    if(timer_channel_4 <= esc_loop_timer)PORTD &= B01111111;                //Set digital output 7 to low if the time is expired.
+    if(timer_channel_1 <= esc_loop_timer)gpio_put(2, true);                 //Set digital output 2 to low if the time is expired.
+    if(timer_channel_2 <= esc_loop_timer)gpio_put(3, true);                 //Set digital output 3 to low if the time is expired.
+    if(timer_channel_3 <= esc_loop_timer)gpio_put(4, true);                 //Set digital output 4 to low if the time is expired.
+    if(timer_channel_4 <= esc_loop_timer)gpio_put(5, true);                 //Set digital output 5 to low if the time is expired.
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//This routine is called every time input 8, 9, 10 or 11 changed state. This is used to read the receiver signals. 
+//This routine is called every time input 6, 7, 8 or 9 changed state. This is used to read the receiver signals. 
 //More information about this subroutine can be found in this video:
 //https://youtu.be/bENjl1KQbvo
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-ISR(PCINT0_vect){
+void gpio_callback(uint gpio, uint32_t events) {
   current_time = micros();
+  
   //Channel 1=========================================
-  if(PINB & B00000001){                                                     //Is input 8 high?
-    if(last_channel_1 == 0){                                                //Input 8 changed from 0 to 1.
-      last_channel_1 = 1;                                                   //Remember current input state.
-      timer_1 = current_time;                                               //Set timer_1 to current_time.
+  if(gpio_get(6)){                                             //Is input 6 high?
+    if(last_channel_1 == 0){                                   //Input 6 changed from 0 to 1
+      last_channel_1 = 1;                                      //Remember current input state
+      timer_1 = current_time;                                  //Set timer_1 to current_time
     }
   }
-  else if(last_channel_1 == 1){                                             //Input 8 is not high and changed from 1 to 0.
-    last_channel_1 = 0;                                                     //Remember current input state.
-    receiver_input[1] = current_time - timer_1;                             //Channel 1 is current_time - timer_1.
+  else if(last_channel_1 == 1){                                //Input 6 is not high and changed from 1 to 0
+    last_channel_1 = 0;                                        //Remember current input state
+    receiver_input_channel_1 = current_time - timer_1;         //Channel 1 is current_time - timer_1
   }
   //Channel 2=========================================
-  if(PINB & B00000010 ){                                                    //Is input 9 high?
-    if(last_channel_2 == 0){                                                //Input 9 changed from 0 to 1.
-      last_channel_2 = 1;                                                   //Remember current input state.
-      timer_2 = current_time;                                               //Set timer_2 to current_time.
+  if(gpio_get(7)){                                             //Is input 7 high?
+    if(last_channel_2 == 0){                                   //Input 7 changed from 0 to 1
+      last_channel_2 = 1;                                      //Remember current input state
+      timer_2 = current_time;                                  //Set timer_2 to current_time
     }
   }
-  else if(last_channel_2 == 1){                                             //Input 9 is not high and changed from 1 to 0.
-    last_channel_2 = 0;                                                     //Remember current input state.
-    receiver_input[2] = current_time - timer_2;                             //Channel 2 is current_time - timer_2.
+  else if(last_channel_2 == 1){                                //Input 7 is not high and changed from 1 to 0
+    last_channel_2 = 0;                                        //Remember current input state
+    receiver_input_channel_2 = current_time - timer_2;         //Channel 2 is current_time - timer_2
   }
   //Channel 3=========================================
-  if(PINB & B00000100 ){                                                    //Is input 10 high?
-    if(last_channel_3 == 0){                                                //Input 10 changed from 0 to 1.
-      last_channel_3 = 1;                                                   //Remember current input state.
-      timer_3 = current_time;                                               //Set timer_3 to current_time.
+  if(gpio_get(8)){                                             //Is input 8 high?
+    if(last_channel_3 == 0){                                   //Input 8 changed from 0 to 1
+      last_channel_3 = 1;                                      //Remember current input state
+      timer_3 = current_time;                                  //Set timer_3 to current_time
     }
   }
-  else if(last_channel_3 == 1){                                             //Input 10 is not high and changed from 1 to 0.
-    last_channel_3 = 0;                                                     //Remember current input state.
-    receiver_input[3] = current_time - timer_3;                             //Channel 3 is current_time - timer_3.
-
+  else if(last_channel_3 == 1){                                //Input 8 is not high and changed from 1 to 0
+    last_channel_3 = 0;                                        //Remember current input state
+    receiver_input_channel_3 = current_time - timer_3;         //Channel 3 is current_time - timer_3
   }
   //Channel 4=========================================
-  if(PINB & B00001000 ){                                                    //Is input 11 high?
-    if(last_channel_4 == 0){                                                //Input 11 changed from 0 to 1.
-      last_channel_4 = 1;                                                   //Remember current input state.
-      timer_4 = current_time;                                               //Set timer_4 to current_time.
+  if(gpio_get(9)){                                             //Is input 9 high?
+    if(last_channel_4 == 0){                                   //Input 9 changed from 0 to 1
+      last_channel_4 = 1;                                      //Remember current input state
+      timer_4 = current_time;                                  //Set timer_4 to current_time
     }
   }
-  else if(last_channel_4 == 1){                                             //Input 11 is not high and changed from 1 to 0.
-    last_channel_4 = 0;                                                     //Remember current input state.
-    receiver_input[4] = current_time - timer_4;                             //Channel 4 is current_time - timer_4.
+  else if(last_channel_4 == 1){                                //Input 9 is not high and changed from 1 to 0
+    last_channel_4 = 0;                                        //Remember current input state
+    receiver_input_channel_4 = current_time - timer_4;         //Channel 4 is current_time - timer_4
   }
 }
 
